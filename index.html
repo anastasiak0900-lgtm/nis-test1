@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Демо — Настольные лампы</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;0,400;0,500;0,600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+DESIGN TOKENS (Идентичны основному сайту)
+══════════════════════════════════════════ */
+:root {
+--bg: #F6F3EE; --surface: #FFFFFF; --surface2: #EFECE7;
+--border: #E0DBD3; --border2: #C8C2B8; --text: #18160F;
+--text-mid: #68625A; --text-soft: #9A948C; --accent: #C07830;
+--accent-bg: #F7EDDF; --accent-deep: #8C5018; --green: #2E6245;
+--green-bg: #DDF0E5; --blue: #2B4D72; --blue-bg: #DBE9F5;
+--purple: #5A3D8A; --purple-bg: #EDE5F8; --gold: #D4A030;
+--red: #C03830; --red-bg: #FDEAE8;
+--sh-card: 0 2px 14px rgba(24,22,15,.07);
+--sh-hover: 0 10px 36px rgba(24,22,15,.14); --r: 10px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+
+.screen { display:none; } .screen.active { display:block; }
+#screen-select {
+min-height:100vh; display:none; flex-direction:column;
+align-items:center; justify-content:center;
+background: linear-gradient(160deg, #F6F3EE 0%, #EDE7DC 100%); padding:40px 24px;
+}
+#screen-select.active { display:flex; }
+.sel-logo { font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:600; color:var(--text); letter-spacing:-.3px; margin-bottom:6px; }
+.sel-logo span { color:var(--accent); }
+.sel-eyebrow { font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-soft); margin-bottom:48px; }
+.sel-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:44px 48px; max-width:760px; width:100%; box-shadow:0 16px 56px rgba(24,22,15,.10); }
+.sel-title { font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:600; line-height:1.15; letter-spacing:-.3px; margin-bottom:10px; }
+.sel-sub { font-size:14px; color:var(--text-soft); line-height:1.6; margin-bottom:36px; max-width:560px; }
+.sel-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:32px; }
+.sel-option { border:2px solid var(--border); border-radius:var(--r); padding:20px 22px; cursor:pointer; transition:all .22s; background:var(--bg); position:relative; overflow:hidden; }
+.sel-option::before { content:''; position:absolute; inset:0; background:var(--accent-bg); opacity:0; transition:opacity .2s; }
+.sel-option:hover { border-color:var(--accent); box-shadow:0 4px 20px rgba(192,120,48,.14); }
+.sel-option:hover::before { opacity:1; }
+.sel-option.picked { border-color:var(--accent); background:var(--accent-bg); }
+.sel-option > * { position:relative; }
+.sel-opt-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.sel-opt-letter { width:32px; height:32px; border-radius:8px; background:var(--text); color:#fff; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .2s; }
+.sel-option.picked .sel-opt-letter, .sel-option:hover .sel-opt-letter { background:var(--accent); }
+.sel-opt-name { font-size:14px; font-weight:600; color:var(--text); line-height:1.2; }
+.sel-opt-desc { font-size:12px; color:var(--text-mid); line-height:1.5; }
+.sel-opt-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:10px; }
+.sel-tag { font-size:10px; font-weight:600; letter-spacing:.3px; padding:2px 8px; border-radius:4px; }
+.tag-count { background:var(--surface2); color:var(--text-mid); }
+.tag-hint  { background:var(--green-bg); color:var(--green); }
+.tag-bare  { background:var(--blue-bg);  color:var(--blue); }
+.sel-check { position:absolute; top:12px; right:12px; width:22px; height:22px; border-radius:50%; border:2px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.sel-option.picked .sel-check { background:var(--accent); border-color:var(--accent); }
+.sel-check svg { width:12px; height:12px; stroke:#fff; fill:none; stroke-width:2.5; opacity:0; transition:opacity .2s; }
+.sel-option.picked .sel-check svg { opacity:1; }
+.sel-btn-row { display:flex; justify-content:flex-end; }
+.sel-btn { padding:13px 36px; background:var(--text); color:#fff; border:none; border-radius:9px; font-family:'Jost',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:background .2s, opacity .2s, transform .15s; letter-spacing:.2px; }
+.sel-btn:hover { background:var(--accent); transform:translateY(-1px); }
+.sel-btn:disabled { opacity:.38; cursor:not-allowed; transform:none; }
+.sel-note { margin-top:20px; font-size:12px; color:var(--text-soft); text-align:center; }
+
+.mkt-screen { display:none; flex-direction:column; min-height:100vh; }
+.mkt-screen.active { display:flex; }
+.topbar { background:var(--text); color:#F5EEE4; font-size:12px; font-weight:400; letter-spacing:.2px; text-align:center; padding:8px 16px; }
+.topbar-inner { display:flex; align-items:center; justify-content:center; gap:24px; flex-wrap:wrap; }
+.topbar-inner b { font-weight:600; }
+.topbar-sep { color:#555; }
+.header { background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:200; }
+.header-row1 { display: grid; grid-template-columns: auto 1fr auto; align-items: center; height: 74px; max-width: 100%; padding: 0 28px; gap: 20px; }
+.logo { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:600; color:var(--text); letter-spacing:-.3px; text-decoration:none; cursor:pointer; }
+.logo span { color:var(--accent); }
+.header-search { width: 100%; max-width: 950px; margin: 0 auto; position: relative; justify-self: center; }
+.header-search input { width: 100%; padding: 13px 58px 13px 22px; border: 2px solid var(--border); border-radius: 10px; font-family: 'Jost', sans-serif; font-size: 16px; background: var(--bg); color: var(--text); outline: none; transition: border-color .2s; }
+.header-search input:focus { border-color: var(--accent); }
+.header-search button { position: absolute; right: 0; top: 0; bottom: 0; width: 58px; background: var(--accent); border: none; border-radius: 0 10px 10px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+.header-search button:hover { background: var(--accent-deep); }
+.header-search button svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2.2; }
+.header-actions { display: flex; gap: 2px; align-items: center; justify-self: end; }
+.h-btn { display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; cursor:pointer; padding:8px 12px; border-radius:8px; color:var(--text-mid); font-family:'Jost',sans-serif; font-size:11px; font-weight:500; transition:background .15s, color .15s; position:relative; white-space:nowrap; }
+.h-btn:hover { background:var(--surface2); color:var(--text); }
+.h-btn svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.7; }
+.h-badge { position:absolute; top:3px; right:6px; background:var(--red); color:#fff; font-size:9px; font-weight:700; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.delivery-bar { background:var(--bg); border-bottom:1px solid var(--border); padding:6px 28px; max-width:100%; }
+.delivery-bar-inner { max-width:100%; margin:0 auto; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-mid); }
+.delivery-bar-inner svg { width:14px; height:14px; stroke:var(--accent); fill:none; stroke-width:2; flex-shrink:0; }
+.delivery-bar-inner a { color:var(--accent); text-decoration:none; font-weight:500; }
+.nav-bar { background:var(--surface); border-bottom:1px solid var(--border); }
+.nav-bar-inner { max-width: 100%; margin: 0 auto; padding: 0 28px; display: flex; height: 54px; align-items: center; gap: 0; overflow-x: auto; scrollbar-width: none; }
+.nav-bar-inner::-webkit-scrollbar { display:none; }
+.nav-bar-inner a { font-size: 14.5px; color: var(--text-mid); text-decoration: none; padding: 0 16px; height: 100%; display: flex; align-items: center; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; white-space: nowrap; flex-shrink: 0; }
+.nav-bar-inner a:hover { color: var(--text); }
+.nav-bar-inner a.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+.page-wrap { flex: 1; }
+.page-inner { max-width: 100%; margin: 0 auto; padding: 0 28px 60px; }
+.breadcrumb { display:flex; gap:6px; align-items:center; font-size:12px; color:var(--text-soft); padding:18px 0 14px; }
+.breadcrumb a { color:var(--text-soft); text-decoration:none; transition:color .15s; }
+.breadcrumb a:hover { color:var(--accent); }
+.bc-sep { color:var(--border2); }
+.page-head { margin-bottom:20px; }
+.page-head h1 { font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:600; letter-spacing:-.3px; }
+.page-head-meta { display:flex; align-items:center; gap:16px; margin-top:5px; flex-wrap:wrap; }
+.ph-count { font-size:13px; color:var(--text-soft); }
+.ph-back { display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--accent); cursor:pointer; background:none; border:none; font-family:'Jost',sans-serif; padding:0; transition:opacity .2s; }
+.ph-back:hover { opacity:.7; }
+.ph-back svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2.2; }
+.task-banner { background:var(--text); color:#fff; border-radius:var(--r); padding:14px 20px; display:flex; align-items:center; gap:12px; font-size:13.5px; margin-bottom:20px; }
+.task-banner strong { font-weight:600; }
+.task-icon { font-size:20px; flex-shrink:0; }
+.top-picks { background:linear-gradient(135deg,#FDF7EE,#F7EBDC); border:1.5px solid #E8C070; border-radius:var(--r); padding:16px 20px; margin-bottom:20px; }
+.top-picks-hd { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.top-picks-hd h3 { font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:var(--accent-deep); }
+.top-picks-hd span { font-size:11px; color:var(--text-soft); }
+.top-picks-row { display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; scrollbar-width:thin; }
+.pick-chip { flex-shrink:0; min-width:148px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 13px; cursor:pointer; display:flex; flex-direction:column; gap:3px; transition:all .2s; }
+.pick-chip:hover { border-color:var(--accent); box-shadow:0 3px 12px rgba(192,120,48,.15); }
+.pch-name { font-size:11.5px; font-weight:500; color:var(--text); line-height:1.3; }
+.pch-price { font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--accent); }
+.pch-stars { font-size:10.5px; color:var(--text-soft); }
+.grid-2col { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; display:flex; flex-direction:column; position:relative; transition:box-shadow .25s, transform .22s; animation:fadeUp .32s ease both; }
+.card:hover { box-shadow:var(--sh-hover); transform:translateY(-4px); }
+.card.chosen { border:2px solid var(--accent); box-shadow:0 0 0 4px var(--accent-bg); }
+.card-img { width:100%; aspect-ratio:1/1; background:linear-gradient(135deg,#EEE9E0 0%,#E4DCCE 100%); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+.card-img .svg-ph { width:52%; height:52%; opacity:.72; }
+.card-badges { position:absolute; top:8px; left:8px; display:flex; flex-direction:column; gap:4px; z-index:3; }
+.badge { font-size:9.5px; font-weight:600; letter-spacing:.3px; padding:3px 8px; border-radius:4px; line-height:1.4; white-space:nowrap; }
+.b-rec    { background:var(--accent-bg); color:var(--accent-deep); }
+.b-pop    { background:var(--green-bg);  color:var(--green); }
+.b-social { background:var(--blue-bg);   color:var(--blue); }
+.wish-btn { position:absolute; top:8px; right:8px; z-index:3; background:rgba(255,255,255,.9); border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .15s, background .2s; backdrop-filter:blur(4px); }
+.wish-btn:hover { background:#fff; transform:scale(1.1); }
+.wish-btn svg { width:15px; height:15px; stroke:var(--text-mid); fill:none; stroke-width:1.9; }
+.wish-btn.liked svg { stroke:var(--red); fill:var(--red); }
+.card-body { padding:12px 14px; flex:1; display:flex; flex-direction:column; gap:5px; }
+.card-name { font-size:13px; font-weight:500; color:var(--text); line-height:1.3; }
+.card-attrs { font-size:11px; color:var(--text-soft); line-height:1.55; }
+.card-rating { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-mid); margin-top:2px; }
+.stars { color:var(--gold); font-size:12px; letter-spacing:.3px; }
+.r-num { font-weight:600; color:var(--text); }
+.card-price { font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:var(--text); margin-top:auto; padding-top:6px; }
+.card-footer { padding:10px 14px 13px; border-top:1px solid var(--surface2); }
+.btn-pick { width:100%; padding:9px; background:var(--text); color:#fff; border:none; border-radius:8px; font-family:'Jost',sans-serif; font-size:12.5px; font-weight:500; cursor:pointer; letter-spacing:.2px; transition:background .2s, transform .12s; }
+.btn-pick:hover { background:var(--accent-deep); }
+.btn-pick:active { transform:scale(.98); }
+.btn-pick.done { background:var(--green); }
+.modal-overlay { position:fixed; inset:0; background:rgba(24,22,15,.5); backdrop-filter:blur(7px); z-index:800; display:none; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--surface); border-radius:16px; padding:40px 44px; max-width:460px; width:92%; text-align:center; box-shadow:0 32px 80px rgba(24,22,15,.22); animation:mIn .26s ease; }
+@keyframes mIn { from{opacity:0;transform:scale(.94) translateY(10px);} to{opacity:1;transform:none;} }
+.modal-ico { font-size:46px; margin-bottom:14px; }
+.modal-h { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:600; margin-bottom:8px; }
+.modal-prod { font-size:16px; font-weight:500; margin-bottom:5px; }
+.modal-price { font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--accent); margin-bottom:16px; }
+.modal-note { font-size:13px; color:var(--text-soft); margin-bottom:28px; }
+.modal-btns { display:flex; gap:10px; justify-content:center; }
+.m-ok { padding:12px 28px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-family:'Jost',sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:background .2s; }
+.m-ok:hover { background:var(--accent-deep); }
+.m-back { padding:12px 28px; background:var(--surface2); color:var(--text); border:none; border-radius:8px; font-family:'Jost',sans-serif; font-size:14px; font-weight:500; cursor:pointer; }
+.m-back:hover { background:var(--border); }
+.footer { background:var(--text); color:#B8AFA4; padding:40px 28px 24px; }
+.footer-inner { max-width: 100%; margin: 0 auto; }
+.footer-top { display:flex; gap:48px; flex-wrap:wrap; margin-bottom:32px; }
+.footer-logo { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:600; color:#fff; margin-bottom:10px; }
+.footer-logo span { color:var(--accent); }
+.footer-desc { font-size:12px; line-height:1.7; max-width:200px; }
+.f-col h4 { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.7px; color:#fff; margin-bottom:12px; }
+.f-col a { display:block; font-size:13px; color:#B8AFA4; text-decoration:none; margin-bottom:6px; transition:color .2s; }
+.f-col a:hover { color:#fff; }
+.footer-bottom { border-top:1px solid #333; padding-top:18px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#666; flex-wrap:wrap; gap:8px; }
+.footer-bottom a { color:#666; text-decoration:none; }
+.footer-bottom a:hover { color:#999; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:none;} }
+@media (max-width: 768px) { .sel-grid{grid-template-columns:1fr;} .header-row1{grid-template-columns:1fr; gap:10px;} .header-search{grid-column:1/-1;} }
+</style>
+</head>
+<body>
+
+<!-- ЭКРАН ВЫБОРА -->
+<div id="screen-select" class="screen active">
+<div class="sel-logo">Мар<span>кет</span></div>
+<div class="sel-eyebrow">Предварительное ознакомление</div>
+<div class="sel-card">
+<h2 class="sel-title">Выберите версию для ознакомления</h2>
+<p class="sel-sub">Этот демо-сайт создан, чтобы вы заранее поняли структуру интерфейса. Выберите один из двух вариантов, чтобы увидеть, как будет выглядеть страница с настольными лампами.</p>
+<div class="sel-grid">
+<div class="sel-option" id="opt-A" onclick="pickVariant('A')">
+<div class="sel-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+<div class="sel-opt-header"><div class="sel-opt-letter">A</div><div class="sel-opt-name">С рекомендациями</div></div>
+<div class="sel-opt-desc">Рейтинги, бейджи «Рекомендуем» и «Популярно», блок «Топ-выбор».</div>
+<div class="sel-opt-tags"><span class="sel-tag tag-count">8 товаров</span><span class="sel-tag tag-hint">Есть подсказки</span></div>
+</div>
+<div class="sel-option" id="opt-B" onclick="pickVariant('B')">
+<div class="sel-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+<div class="sel-opt-header"><div class="sel-opt-letter">B</div><div class="sel-opt-name">Без рекомендаций</div></div>
+<div class="sel-opt-desc">Чистый каталог: только фото, название, характеристики и цена.</div>
+<div class="sel-opt-tags"><span class="sel-tag tag-count">8 товаров</span><span class="sel-tag tag-bare">Без бейджей</span></div>
+</div>
+</div>
+<div class="sel-btn-row"><button class="sel-btn" id="sel-go-btn" onclick="goToVariant()" disabled>Перейти к ознакомлению →</button></div>
+</div>
+<p class="sel-note">Демо-версия · Не сохраняет данные</p>
+</div>
+
+<!-- ЭКРАНЫ ИНТЕРФЕЙСОВ -->
+<div id="screen-A" class="screen mkt-screen"></div>
+<div id="screen-B" class="screen mkt-screen"></div>
+
+<!-- МОДАЛЬНОЕ ОКНО -->
+<div class="modal-overlay" id="modalOverlay">
+<div class="modal">
+<div class="modal-ico">🛒</div><h2 class="modal-h">Демо-выбор</h2>
+<div class="modal-prod" id="mProd"></div><div class="modal-price" id="mPrice"></div>
+<p class="modal-note">В реальном исследовании этот товар попадёт в корзину. Для ознакомления достаточно нажать «Вернуться».</p>
+<div class="modal-btns"><button class="m-ok" onclick="confirmDemo()">Понятно</button><button class="m-back" onclick="closeModal()">Вернуться</button></div>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   ДАННЫЕ (8 настольных ламп)
+══════════════════════════════════════════ */
+const DEMO_PRODUCTS = [
+  { id: 1, name: "Настольная лампа Aurora", type: "Настольный", color: "Белый матовый", watt: "9 Вт", base: "E27", h: "42 см", mat: "Алюминий", price: 2100, svg: "table" },
+  { id: 2, name: "Настольная лампа Terra", type: "Настольный", color: "Орех", watt: "7 Вт", base: "E14", h: "35 см", mat: "Дерево, лён", price: 2850, svg: "table" },
+  { id: 3, name: "Настольная лампа Nova Slim", type: "Настольный", color: "Чёрный", watt: "10 Вт", base: "LED", h: "38 см", mat: "Металл, пластик", price: 3400, svg: "table" },
+  { id: 4, name: "Настольная лампа Studio", type: "Настольный", color: "Графит", watt: "15 Вт", base: "E27", h: "55 см", mat: "Сталь", price: 3900, svg: "table" },
+  { id: 5, name: "Настольная лампа Zen", type: "Настольный", color: "Серый камень", watt: "8 Вт", base: "E14", h: "30 см", mat: "Мрамор, ткань", price: 3200, svg: "table" },
+  { id: 6, name: "Настольная лампа Orbit", type: "Настольный", color: "Хром", watt: "6 Вт", base: "G9", h: "28 см", mat: "Стекло, металл", price: 2450, svg: "table" },
+  { id: 7, name: "Настольная лампа Classic Brass", type: "Настольный", color: "Латунь", watt: "12 Вт", base: "E27", h: "40 см", mat: "Металл, стекло", price: 4100, svg: "table" },
+  { id: 8, name: "Настольная лампа Bamboo Arc", type: "Настольный", color: "Натуральный", watt: "8 Вт", base: "E27", h: "45 см", mat: "Бамбук, металл", price: 2750, svg: "table" }
+];
+
+const DEMO_RATINGS = { 1:{r:4.8,n:142}, 2:{r:4.3,n:68}, 3:{r:4.6,n:95}, 4:{r:4.9,n:310}, 5:{r:4.2,n:44}, 6:{r:4.7,n:121}, 7:{r:4.1,n:58}, 8:{r:4.5,n:89} };
+
+const CFG = {
+  A: { products: DEMO_PRODUCTS, gridClass:'grid-2col', showHelp:true,  showTopPicks:true,  recIds:[1,6], popId:4, socialIds:[3,6] },
+  B: { products: DEMO_PRODUCTS, gridClass:'grid-2col', showHelp:false, showTopPicks:false, recIds:[], popId:0, socialIds:[] }
+};
+
+/* ══════════════════════════════════════════
+   УТИЛИТЫ
+══════════════════════════════════════════ */
+function svgLamp(type) {
+  const T = {
+    table:   `<svg viewBox="0 0 100 120" fill="none"><polygon points="28,62 50,18 72,62" fill="#C8B99A" stroke="#A89070" stroke-width="1.5"/><line x1="50" y1="62" x2="50" y2="98" stroke="#B8A888" stroke-width="4" stroke-linecap="round"/><ellipse cx="50" cy="100" rx="24" ry="6" fill="#A08060"/></svg>`,
+  };
+  return T[type] || T.table;
+}
+function fmtPrice(p) { return p.toLocaleString('ru-RU') + ' ₽'; }
+function fmtStars(r) { const f = Math.floor(r), h = r-f>=.5?1:0, e=5-f-h; return '★'.repeat(f)+(h?'⯨':'')+'☆'.repeat(e); }
+
+let activeVariant = null;
+
+/* ══════════════════════════════════════════
+   НАВИГАЦИЯ И РЕНДЕРИНГ
+══════════════════════════════════════════ */
+function pickVariant(v) {
+  document.querySelectorAll('.sel-option').forEach(o => o.classList.remove('picked'));
+  document.getElementById('opt-'+v).classList.add('picked');
+  activeVariant = v;
+  document.getElementById('sel-go-btn').disabled = false;
+}
+
+function goToVariant() {
+  if (!activeVariant) return;
+  buildScreen(activeVariant);
+  showScreen('screen-'+activeVariant);
+  window.scrollTo(0,0);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function buildScreen(v) {
+  const el = document.getElementById('screen-'+v);
+  if (el.innerHTML.trim()) return;
+  const cfg = CFG[v];
+  el.innerHTML = marketplaceHTML(v, cfg);
+
+  if (cfg.showTopPicks) {
+    const row = el.querySelector('#topPicksRow');
+    cfg.recIds.forEach(id => {
+      const p = DEMO_PRODUCTS.find(x => x.id === id);
+      const rt = DEMO_RATINGS[id];
+      const chip = document.createElement('div');
+      chip.className = 'pick-chip';
+      chip.innerHTML = `<div class="pch-name">${p.name}</div><div class="pch-price">${fmtPrice(p.price)}</div><div class="pch-stars">★ ${rt.r} · ${rt.n} отзывов</div>`;
+      chip.onclick = () => el.querySelector(`#card-${id}`)?.scrollIntoView({behavior:'smooth',block:'center'});
+      row.appendChild(chip);
+    });
+  }
+}
+
+function marketplaceHTML(v, cfg) {
+  const topPicksHTML = cfg.showTopPicks ? `<div class="top-picks"><div class="top-picks-hd"><h3>⭐ Топ-выбор</h3><span>Рекомендовано системой</span></div><div class="top-picks-row" id="topPicksRow"></div></div>` : '';
+  const cardsHTML = cfg.products.map((p,i) => cardHTML(p, i, cfg, v)).join('');
+
+  return `
+    <div class="topbar"><div class="topbar-inner"><span>📦 <b>Демо-режим</b></span><span class="topbar-sep">|</span><span>Только настольные лампы · 8 позиций</span></div></div>
+    <header class="header">
+      <div class="header-row1">
+        <a class="logo" onclick="showScreen('screen-select'); return false;" href="#">Мар<span>кет</span></a>
+        <div class="header-search"><input type="text" placeholder="Поиск ламп (демо)..." disabled><button disabled><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
+        <div class="header-actions">
+          <button class="h-btn"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Москва</button>
+          <button class="h-btn"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Войти</button>
+          <button class="h-btn"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Корзина<span class="h-badge" id="cartBadge-${v}">0</span></button>
+        </div></div>
+      <div class="delivery-bar"><div class="delivery-bar-inner"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Доставка в <a href="#">Москву</a> · Пункты выдачи рядом</div></div>
+    </header>
+    <main class="page-wrap"><div class="page-inner">
+      <div class="breadcrumb"><a href="#">Главная</a><span class="bc-sep">/</span><a href="#">Свет и декор</a><span class="bc-sep">/</span>Настольные лампы (Демо)</div>
+      <div class="page-head"><h1>Настольные лампы</h1><div class="page-head-meta"><span class="ph-count">8 товаров</span><button class="ph-back" onclick="showScreen('screen-select')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Назад к выбору</button></div></div>
+      <div class="task-banner"><span class="task-icon">📖</span><span><strong>Ознакомление:</strong> Вы просматриваете вариант ${v}. Обратите внимание на наличие или отсутствие подсказок. Это нужно для подготовки к основному тесту.</span></div>
+      ${topPicksHTML}
+      <div class="${cfg.gridClass}" id="grid-${v}">${cardsHTML}</div>
+    </div></main>
+    ${footerHTML(v)}`;
+}
+
+function cardHTML(p, idx, cfg, v) {
+  const showHelp = cfg.showHelp;
+  const isRec = showHelp && cfg.recIds?.includes(p.id), isSocial = showHelp && cfg.socialIds?.includes(p.id), isPop = showHelp && cfg.popId === p.id;
+  const rt = DEMO_RATINGS[p.id] || {r:4.0,n:20};
+  const badges = [isRec?`<span class="badge b-rec">Рекомендуем</span>`:'',isPop?`<span class="badge b-pop">Чаще всего выбирают</span>`:'',isSocial&&!isPop?`<span class="badge b-social">Популярно</span>`:''].join('');
+  const ratingRow = showHelp?`<div class="card-rating"><span class="stars">${fmtStars(rt.r)}</span><span class="r-num">${rt.r}</span><span>${rt.n} отзывов</span></div>`:'';
+  
+  return `<div class="card" id="card-${p.id}" style="animation-delay:${(idx%4)*0.06}s">
+    <div class="card-img"><div class="svg-ph">${svgLamp(p.svg)}</div><div class="card-badges">${badges}</div>
+    <button class="wish-btn" onclick="this.classList.toggle('liked')"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button></div>
+    <div class="card-body"><div class="card-name">${p.name}</div><div class="card-attrs">${p.color} · ${p.watt}<br>Цоколь: ${p.base} · Высота: ${p.h}</div>${ratingRow}<div class="card-price">${fmtPrice(p.price)}</div></div>
+    <div class="card-footer"><button class="btn-pick" id="btn-${v}-${p.id}" onclick="openDemoModal(${p.id},'${v}')">Посмотреть</button></div></div>`;
+}
+
+function footerHTML(v) { return `<footer class="footer"><div class="footer-inner"><div class="footer-top"><div><div class="footer-logo">Мар<span>кет</span></div><div class="footer-desc">Демо-прототип для ознакомления с интерфейсами.</div></div><div class="f-col"><h4>Навигация</h4><a href="#">Главная</a><a href="#">Каталог</a><a href="#">Помощь</a></div><div class="f-col"><h4>Информация</h4><a href="#">О проекте</a><a href="#">Условия</a></div></div><div class="footer-bottom"><span>© 2026 Демо-прототип</span><span>Вариант <strong>${v}</strong></span></div></div></footer>`; }
+
+/* ══════════════════════════════════════════
+   МОДАЛЬНОЕ ОКНО (ДЕМО)
+══════════════════════════════════════════ */
+function openDemoModal(id, v) {
+  const p = DEMO_PRODUCTS.find(x => x.id === id);
+  document.getElementById('mProd').textContent = p.name;
+  document.getElementById('mPrice').textContent = fmtPrice(p.price);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function confirmDemo() { closeModal(); }
+document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+</script>
+</body>
+</html>
